@@ -39,7 +39,7 @@ public class NfseController {
         }
     }
 
-    @DeleteMapping("/{numeroNfse}")
+    @DeleteMapping("/cancelar/{numeroNfse}")
     public ResponseEntity<NfseResponse> cancelarNfse(
             @RequestHeader("Authorization") String token,
             @PathVariable Long numeroNfse) {

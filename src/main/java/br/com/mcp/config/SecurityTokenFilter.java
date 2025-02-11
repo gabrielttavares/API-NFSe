@@ -35,6 +35,7 @@ public class SecurityTokenFilter extends OncePerRequestFilter {
 						Collections.emptyList());
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 			} catch (Exception e) {
+				e.printStackTrace();
 				System.out.println("Validação do token falhou: " + e.getMessage());
 				SecurityContextHolder.clearContext();
 			}
