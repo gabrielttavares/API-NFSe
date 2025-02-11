@@ -1,18 +1,18 @@
 package br.com.mcp.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import java.security.Key;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.lang.module.ModuleDescriptor.Builder;
-import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
-import java.util.UUID;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class TokenService {
@@ -43,24 +43,24 @@ public class TokenService {
 			if (claims.getExpiration().before(new Date())) {
 				throw new SecurityException("Token expirado.");
 			}
-			
 			return claims.getSubject();
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new SecurityException("Token inválido.");
 		}
 	}
 	
 	public String gerarToken(String prestadorId) {
 		try {
-			Date now = new Date();
-			Date expiration = new Date(now.getTime() + 3600000);
+			Calendar expiration = Calendar.getInstance();
+			expiration.set(Calendar.YEAR, 2050);
 			
 			return Jwts.builder()
 					.setIssuer("NFSe API")        // quem emitiu o token
 	                .setSubject(prestadorId)      // para qual prestador
-	                .setIssuedAt(now)             // quando foi emitido
-	                .setExpiration(expiration)     // quando expira
-	                .setId(UUID.randomUUID().toString())
+	                .setIssuedAt(Calendar.getInstance().getTime())             // quando foi emitido
+	                .setExpiration(expiration.getTime())     // quando expira
+//	                .setId(UUID.randomUUID().toString())
 	                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
 	                .compact();
 		} catch (Exception e) {

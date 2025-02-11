@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class NfseRequest {
+	private Integer idRPS;
 	private String documento;
 	private String im;
 	private String nome;
