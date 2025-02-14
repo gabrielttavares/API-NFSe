@@ -3,11 +3,15 @@ package br.com.mcp.service;
 import br.com.mcp.dto.NfseRequest;
 import br.com.mcp.dto.NfseResponse;
 
+import java.io.File;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.mcptecnologia.integrador_nfse.Empresa;
 import com.mcptecnologia.integrador_nfse.artviagens.IntegradorMilhasFacil;
+import com.mcptecnologia.integrador_nfse.certificacao.Assinador;
 
 //Lógica de negócio principal
 //Age como uma ponte entre a API e o serviço backend
@@ -26,30 +30,39 @@ public class NfseGatewayService {
 		this.tokenService = tokenService;
 	}
 	
+	//GERAR
 	public NfseResponse gerarNotaFiscal(String token, NfseRequest request) {
 	    try {
-	        String prestadorId = tokenService.validarEObterPrestador(token);
 	        
-	    	IntegradorMilhasFacil nfse = new IntegradorMilhasFacil();
-			
-	    	// Extrair e validar parâmetros
-            int id = Integer.valueOf(request.getIdRPS());
-            String documento = request.getDocumento();
-            String im = request.getIm();
-            String nome = request.getNome();
-            String endereco = request.getEndereco();
-            String numeroImovel = request.getNumeroImovel();
-            String complemento = request.getComplemento();
-            String bairro = request.getBairro();
-            int cep = Integer.valueOf(request.getCep());
-            int cidadeIBGE = Integer.valueOf(request.getCidadeIBGE());
-            String uf = request.getUf();
-            String email = request.getEmail();
-            String telefone = request.getTelefone();
-            double valor = Double.valueOf(request.getValor());
-			
-            
+	        if (request == null) {
+				return NfseResponse.builder()
+                    .status("ERRO")
+                    .erros(new String[]{"Requisição não pode ser nula"})
+                    .build();
+			}
+	        
+	        //Param. Numéricos
+	        Integer id = parseIntegerSafely(request.getIdRPS(), "ID do RPS");
+	        Integer cep = parseIntegerSafely(request.getCep(), "CEP");
+	        Integer cidadeIBGE = parseIntegerSafely(request.getCidadeIBGE(), "Código IBGE da cidade");
+	        Double valor = parseDoubleSafely(request.getValor(), "Valor");
+	        
+	        //Não-numéricos (com null safety)
+	        String documento = nullToEmpty(request.getDocumento());
+	        String im = nullToEmpty(request.getIm());
+	        String nome = nullToEmpty(request.getNome());
+	        String endereco = nullToEmpty(request.getEndereco());
+	        String numeroImovel = nullToEmpty(request.getNumeroImovel());
+	        String complemento = nullToEmpty(request.getComplemento());
+	        String bairro = nullToEmpty(request.getBairro());
+	        String uf = nullToEmpty(request.getUf());
+	        String email = nullToEmpty(request.getEmail());
+	        String telefone = nullToEmpty(request.getTelefone());
+			    
             validarCamposObrigatorios(documento, im, nome, valor);
+            
+            String prestadorId = tokenService.validarEObterPrestador(token);
+	    	IntegradorMilhasFacil nfse = new IntegradorMilhasFacil(Empresa.getPorCnpj(prestadorId));
             
             // Gerar NFSe usando o integrador
             String resposta = nfse.gerarNFSe(
@@ -104,7 +117,31 @@ public class NfseGatewayService {
             throw new IllegalArgumentException("Valor deve ser maior que zero");
         }
     }
+    
+    //Helper methods
+    private Integer parseIntegerSafely(Integer integer, String fieldName) {
+	    if (integer == null || integer.toString().trim().isEmpty()) {
+	        throw new IllegalArgumentException(fieldName + " é obrigatório");
+	    }
+	    try {
+	        return Integer.valueOf(integer.toString().trim());
+	    } catch (NumberFormatException e) {
+	        throw new IllegalArgumentException(fieldName + " deve ser um número válido");
+	    }
+	}
+
+    private Double parseDoubleSafely(Double double1, String fieldName) {
+        if (double1 == null) {
+            throw new IllegalArgumentException(fieldName + " é obrigatório");
+        }
+        return double1;
+    }
+
+	private String nullToEmpty(String value) {
+	    return value == null ? "" : value.trim();
+	}
 	
+	//CONSULTAR
     public NfseResponse consultarRPS(String token, Long numeroRPS) {
         try {
             String prestadorId = tokenService.validarEObterPrestador(token);
@@ -143,6 +180,7 @@ public class NfseGatewayService {
         }
     }
     
+    //CANCELAR
     public NfseResponse cancelarNfse(String token, Long numeroNfse) {
         try {
             String prestadorId = tokenService.validarEObterPrestador(token);
