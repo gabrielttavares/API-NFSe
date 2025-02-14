@@ -64,6 +64,7 @@ public class NfseController {
             NfseResponse resultado = nfseGatewayService.consultarRPS(token, numeroRps);
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
+        	e.printStackTrace();
             return ResponseEntity.status(500).body(
                 NfseResponse.builder()
                     .status("ERRO")
