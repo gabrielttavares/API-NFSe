@@ -22,9 +22,11 @@ class NfseIntegrationTest {
 	@Test
 	void deveCompletarFluxoNfse() {
 
+		//arrange
 		NfseRequest request = createSampleNfseRequest();
 		String prestadorId = "123";
 
+		//act
 		String token = tokenService.gerarToken(prestadorId);
 		NfseResponse nfseResponse = nfseService.gerarNotaFiscal("Bearer " + token, request);
 		NfseResponse cancelResponse = nfseService.cancelarNfse("Bearer " + token,
@@ -32,6 +34,7 @@ class NfseIntegrationTest {
 		NfseResponse consultaResponse = nfseService.consultarRPS("Bearer " + token, 
 				nfseResponse.getId());
 		
+		//assert
 		assertAll("Geração de Token",
 				() -> assertNotNull(token, "Token não deve ser nulo.")
 		);
